@@ -45,10 +45,17 @@ Respond with this exact JSON structure:
     system: systemPrompt,
   });
 
-  const text = response.content[0].type === "text" ? response.content[0].text : "";
+  const raw = response.content[0].type === "text" ? response.content[0].text : "";
+
+  // Strip markdown code fences if present (```json ... ``` or ``` ... ```)
+  const text = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+
+  // Extract the first JSON object in case there's surrounding text
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  const jsonStr = jsonMatch ? jsonMatch[0] : text;
 
   try {
-    const data = JSON.parse(text);
+    const data = JSON.parse(jsonStr);
     return {
       id: crypto.randomUUID(),
       status: "generating",
@@ -58,6 +65,6 @@ Respond with this exact JSON structure:
       ...data,
     } as GeneratedProduct;
   } catch {
-    throw new Error("Failed to parse AI response: " + text.slice(0, 200));
+    throw new Error("Failed to parse AI response: " + raw.slice(0, 200));
   }
 }
