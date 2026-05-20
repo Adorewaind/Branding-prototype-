@@ -12,15 +12,12 @@ export async function POST(req: NextRequest) {
 
     const pdfBytes = await generateEtsyDeliverable(product as GeneratedProduct);
 
-    return new NextResponse(Buffer.from(pdfBytes), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${product.title?.replace(/[^a-z0-9]/gi, "-").toLowerCase() ?? "product"}-etsy-deliverable.pdf"`,
-      },
-    });
+    // Return as base64 JSON — avoids binary transfer issues in serverless environments
+    const base64 = Buffer.from(pdfBytes).toString("base64");
+    return NextResponse.json({ pdf: base64, filename: `${product.title?.replace(/[^a-z0-9]/gi, "-").toLowerCase() ?? "product"}-etsy.pdf` });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("PDF export error:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -29,13 +29,18 @@ export default function ProductCard({ product, onUpdate, onRemove }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ product: productWithLink }),
       });
-      if (!res.ok) throw new Error("Export failed");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Export failed");
 
-      const blob = await res.blob();
+      // Decode base64 PDF and trigger download
+      const binary = atob(data.pdf);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${product.title?.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-etsy.pdf`;
+      a.download = data.filename ?? `${product.title?.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-etsy.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -293,7 +298,7 @@ export default function ProductCard({ product, onUpdate, onRemove }: Props) {
           )}
         </button>
         <p className="text-center text-xs text-gray-400 mt-2">
-          Includes Canva link, buyer instructions & listing copy
+          Downloads a PDF with Canva link, buyer instructions & Etsy copy
         </p>
       </div>
     </div>
