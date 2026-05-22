@@ -1,49 +1,71 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "@supabase/supabase-js";
-
-const DEFAULT_SYSTEM = `You are a friendly AI receptionist for a service business. Be warm, concise, and helpful. Answer questions about services, pricing, and booking. If you don't know specific details, offer to have the owner follow up.`;
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: NextRequest) {
-  const { messages, businessId } = await req.json();
+  try {
+    const { businessId, messages } = await req.json();
 
-  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+    if (!businessId || !messages?.length) {
+      return NextResponse.json({ error: "Missing businessId or messages" }, { status: 400 });
+    }
 
-  let systemPrompt = DEFAULT_SYSTEM;
-
-  if (businessId) {
-    const { data: settings } = await supabase
+    const supabase = await createClient();
+    const { data: bizSettings } = await supabase
       .from("business_settings")
-      .select("*, profiles(business_name, business_type)")
+      .select("*")
       .eq("profile_id", businessId)
       .single();
 
-    if (settings) {
-      const profile = settings.profiles as { business_name: string; business_type: string } | null;
-      systemPrompt = `You are ${settings.ai_name || "an AI receptionist"} for ${profile?.business_name || "this business"}, a ${profile?.business_type || "service business"}.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("business_name, business_type")
+      .eq("id", businessId)
+      .single();
 
-${settings.greeting ? `Greeting: ${settings.greeting}` : ""}
-${settings.services?.length ? `Services: ${JSON.stringify(settings.services)}` : ""}
-${settings.deposit_policy ? `Deposit Policy: ${settings.deposit_policy}` : ""}
-${settings.cancellation_policy ? `Cancellation Policy: ${settings.cancellation_policy}` : ""}
-${settings.booking_link ? `Booking Link: ${settings.booking_link}` : ""}
-${settings.faqs?.length ? `FAQs: ${JSON.stringify(settings.faqs)}` : ""}
+    const businessName = profile?.business_name || "this business";
+    const businessType = profile?.business_type || "service business";
+    const aiName = bizSettings?.ai_name || "AI Receptionist";
+    const greeting = bizSettings?.greeting || "";
+    const depositPolicy = bizSettings?.deposit_policy || "";
+    const cancellationPolicy = bizSettings?.cancellation_policy || "";
+    const bookingLink = bizSettings?.booking_link || "";
+    const services: Array<{ name: string; price: string; description: string }> = bizSettings?.services || [];
+    const faqs: Array<{ question: string; answer: string }> = bizSettings?.faqs || [];
 
-Be warm, professional, and concise (2-4 sentences). Always offer to help with booking or answer more questions.`;
+    let systemPrompt = `You are ${aiName}, the AI receptionist for ${businessName} (${businessType}). You are warm, helpful, and professional. Keep responses concise — 2-4 sentences unless detailed info is requested. Always offer to help further or assist with booking at the end of your response.`;
+
+    if (services.length > 0) {
+      systemPrompt += "\n\nSERVICES & PRICING:\n" + services.map(s => `- ${s.name}: ${s.price}${s.description ? ` — ${s.description}` : ""}`).join("\n");
     }
+
+    if (depositPolicy) systemPrompt += `\n\nDEPOSIT POLICY:\n${depositPolicy}`;
+    if (cancellationPolicy) systemPrompt += `\n\nCANCELLATION POLICY:\n${cancellationPolicy}`;
+    if (bookingLink) systemPrompt += `\n\nBOOKING:\nClients can book at: ${bookingLink}`;
+
+    if (faqs.length > 0) {
+      systemPrompt += "\n\nFREQUENTLY ASKED QUESTIONS:\n" + faqs.map(f => `Q: ${f.question}\nA: ${f.answer}`).join("\n\n");
+    }
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return NextResponse.json({ error: "AI not configured" }, { status: 500 });
+    }
+
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const response = await anthropic.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 400,
+      system: systemPrompt,
+      messages: messages.map((m: { role: string; content: string }) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      })),
+    });
+
+    const text = response.content[0].type === "text" ? response.content[0].text : "";
+    return NextResponse.json({ reply: text });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 400,
-    system: systemPrompt,
-    messages,
-  });
-
-  const text = response.content[0].type === "text" ? response.content[0].text : "";
-  return NextResponse.json({ reply: text });
 }

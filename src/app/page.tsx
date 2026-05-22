@@ -34,23 +34,12 @@ export default function LandingPage() {
 
   async function send(text: string) {
     if (!text.trim() || loading) return;
-    const updated = [...messages, { role: "user" as const, content: text }];
-    setMessages(updated);
     setInput("");
+    setMessages(prev => [...prev, { role: "user" as const, content: text }]);
     setLoading(true);
-    try {
-      const res = await fetch("/api/receptionist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updated }),
-      });
-      const data = await res.json();
-      if (data.reply) setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
-    } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "Try asking about services, pricing, or booking!" }]);
-    } finally {
-      setLoading(false);
-    }
+    await new Promise(r => setTimeout(r, 800));
+    setMessages(prev => [...prev, { role: "assistant" as const, content: "This is a demo! Sign up to configure your own AI receptionist with your real services and pricing. 🚀" }]);
+    setLoading(false);
   }
 
   return (
@@ -85,11 +74,11 @@ export default function LandingPage() {
             Your AI receptionist answers questions, handles intake, and captures booking requests 24/7 — even while you're with a client.
           </p>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 32 }}>
-            <a href="/signup" style={{ padding: "14px 28px", background: "linear-gradient(135deg, #6b8cff, #c084fc)", borderRadius: 12, color: "#fff", fontSize: 16, textDecoration: "none", fontWeight: 700 }}>Start 30-Day Free Trial →</a>
+            <a href="/signup" style={{ padding: "14px 28px", background: "linear-gradient(135deg, #6b8cff, #c084fc)", borderRadius: 12, color: "#fff", fontSize: 16, textDecoration: "none", fontWeight: 700 }}>Start 7-Day Free Trial →</a>
             <a href="#demo" style={{ padding: "14px 28px", background: "#f5f5f5", borderRadius: 12, color: "#333", fontSize: 16, textDecoration: "none", fontWeight: 600 }}>See Demo</a>
           </div>
           <div style={{ display: "flex", gap: 24 }}>
-            {["✓ 30 days free", "✓ No credit card required", "✓ 10-min setup"].map(t => (
+            {["✓ 7 days free", "✓ No credit card required", "✓ 10-min setup"].map(t => (
               <div key={t} style={{ color: "#888", fontSize: 13 }}>{t}</div>
             ))}
           </div>
@@ -164,7 +153,7 @@ export default function LandingPage() {
               <div style={{ fontSize: 56, fontWeight: 900 }}>$79</div>
               <div style={{ color: "#888", paddingBottom: 12 }}>/month</div>
             </div>
-            <div style={{ color: "#4ade80", fontWeight: 700, fontSize: 14, marginBottom: 32 }}>First 30 days FREE</div>
+            <div style={{ color: "#4ade80", fontWeight: 700, fontSize: 14, marginBottom: 32 }}>First 7 days FREE</div>
             {["24/7 AI chat on your website", "Custom services & pricing", "Booking request capture", "Client intake questions", "Unlimited conversations", "Works for any service business", "Cancel anytime"].map(f => (
               <div key={f} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, textAlign: "left" }}>
                 <span style={{ color: "#4ade80", fontWeight: 700 }}>✓</span>
@@ -183,7 +172,7 @@ export default function LandingPage() {
         <div style={{ display: "flex", gap: 24, justifyContent: "center" }}>
           <a href="/login" style={{ color: "#888", fontSize: 13, textDecoration: "none" }}>Sign In</a>
           <a href="/signup" style={{ color: "#888", fontSize: 13, textDecoration: "none" }}>Sign Up</a>
-          <a href="/tracker" style={{ color: "#888", fontSize: 13, textDecoration: "none" }}>Outreach Tracker</a>
+          <a href="/signup" style={{ color: "#888", fontSize: 13, textDecoration: "none" }}>Get Started</a>
         </div>
       </footer>
     </div>
