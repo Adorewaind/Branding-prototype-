@@ -2,17 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 const DEFAULT_SYSTEM = `You are a friendly AI receptionist for a service business. Be warm, concise, and helpful. Answer questions about services, pricing, and booking. If you don't know specific details, offer to have the owner follow up.`;
 
 export async function POST(req: NextRequest) {
   const { messages, businessId } = await req.json();
+
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   let systemPrompt = DEFAULT_SYSTEM;
 
