@@ -1,89 +1,191 @@
 "use client";
 
-export default function Home() {
-  const apps = [
-    {
-      href: "/receptionist",
-      icon: "💅",
-      title: "Beauty Tech AI Receptionist",
-      description: "Live AI chat for lash techs, microblading & PMU studios. Answers FAQs, handles intake, and books appointments 24/7.",
-      gradient: "from-pink-400 to-purple-500",
-      badge: "Live Product",
-      badgeColor: "bg-pink-100 text-pink-700",
-    },
-    {
-      href: "/tracker",
-      icon: "📋",
-      title: "OutreachHQ — Sales Tracker",
-      description: "Full CRM to manage your outreach. Track leads, pipeline, DM scripts, and follow-ups all in one dark-mode dashboard.",
-      gradient: "from-blue-500 to-purple-600",
-      badge: "Your Sales Tool",
-      badgeColor: "bg-blue-100 text-blue-700",
-    },
-    {
-      href: "/canva",
-      icon: "🎨",
-      title: "Canva Product Generator",
-      description: "Generate ready-to-sell Canva template digital products for your Etsy store. Wall art, planners, social templates & more.",
-      gradient: "from-purple-500 to-pink-500",
-      badge: "Etsy Products",
-      badgeColor: "bg-purple-100 text-purple-700",
-    },
-  ];
+import { useState, useRef, useEffect } from "react";
+
+interface Message { role: "user" | "assistant"; content: string; }
+
+const DEMO_MESSAGES: Message[] = [
+  { role: "assistant", content: "Hi! I'm the AI receptionist for Brows By Mia. How can I help you today? 💕" },
+  { role: "user", content: "What lash services do you offer?" },
+  { role: "assistant", content: "We offer Classic sets ($120), Hybrid sets ($145), and Volume sets ($165). All sets include a free consultation! We also do fills every 2-3 weeks starting at $55. Would you like to book a session?" },
+  { role: "user", content: "How long does it take?" },
+  { role: "assistant", content: "A full set takes about 2 hours. Fills are usually 60-90 minutes depending on how much has grown out. We want you relaxed, not rushed! 😊" },
+];
+
+export default function LandingPage() {
+  const [messages, setMessages] = useState<Message[]>([DEMO_MESSAGES[0]]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [demoStep, setDemoStep] = useState(0);
+  const [chatOpen, setChatOpen] = useState(true);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (demoStep < DEMO_MESSAGES.length - 1) {
+      const t = setTimeout(() => {
+        setMessages(prev => [...prev, DEMO_MESSAGES[demoStep + 1]]);
+        setDemoStep(d => d + 1);
+      }, 1600);
+      return () => clearTimeout(t);
+    }
+  }, [demoStep]);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  async function send(text: string) {
+    if (!text.trim() || loading) return;
+    const updated = [...messages, { role: "user" as const, content: text }];
+    setMessages(updated);
+    setInput("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/receptionist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: updated }),
+      });
+      const data = await res.json();
+      if (data.reply) setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+    } catch {
+      setMessages(prev => [...prev, { role: "assistant", content: "Try asking about services, pricing, or booking!" }]);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-6 py-16">
-        {/* Header */}
-        <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm text-gray-500 mb-6">
-            <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
-            All systems live
+    <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif", background: "#fff", color: "#1a1a1a" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0}@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}`}</style>
+
+      {/* Nav */}
+      <nav style={{ padding: "18px 40px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #f0f0f0", position: "sticky", top: 0, background: "rgba(255,255,255,0.95)", backdropFilter: "blur(10px)", zIndex: 50 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ fontSize: 22 }}>⚡</div>
+          <div style={{ fontWeight: 800, fontSize: 18 }}>Apex <span style={{ background: "linear-gradient(135deg, #6b8cff, #c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AI Receptionist</span></div>
+        </div>
+        <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
+          <a href="#how" style={{ color: "#888", fontSize: 14, textDecoration: "none", fontWeight: 500 }}>How it works</a>
+          <a href="#pricing" style={{ color: "#888", fontSize: 14, textDecoration: "none", fontWeight: 500 }}>Pricing</a>
+          <a href="/login" style={{ color: "#888", fontSize: 14, textDecoration: "none", fontWeight: 500 }}>Sign in</a>
+          <a href="/signup" style={{ padding: "9px 20px", background: "linear-gradient(135deg, #6b8cff, #c084fc)", borderRadius: 10, color: "#fff", fontSize: 14, textDecoration: "none", fontWeight: 700 }}>Start Free Trial</a>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section style={{ padding: "80px 40px", maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center" }}>
+        <div style={{ animation: "fadeUp 0.6s ease" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#f0f0ff", border: "1px solid #6b8cff33", borderRadius: 20, padding: "6px 14px", fontSize: 12, color: "#6b8cff", fontWeight: 600, marginBottom: 24 }}>
+            ⚡ AI Receptionist for Service Businesses
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Your Business Suite</h1>
-          <p className="text-lg text-gray-500 max-w-xl mx-auto">
-            Three tools built for your beauty tech SaaS business — the product, the sales tracker, and the content generator.
+          <h1 style={{ fontSize: 52, fontWeight: 900, lineHeight: 1.1, marginBottom: 20 }}>
+            Never Miss a<br />
+            <span style={{ background: "linear-gradient(135deg, #6b8cff, #c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Client Again</span>
+          </h1>
+          <p style={{ fontSize: 18, color: "#666", lineHeight: 1.6, marginBottom: 32 }}>
+            Your AI receptionist answers questions, handles intake, and captures booking requests 24/7 — even while you're with a client.
           </p>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 32 }}>
+            <a href="/signup" style={{ padding: "14px 28px", background: "linear-gradient(135deg, #6b8cff, #c084fc)", borderRadius: 12, color: "#fff", fontSize: 16, textDecoration: "none", fontWeight: 700 }}>Start 30-Day Free Trial →</a>
+            <a href="#demo" style={{ padding: "14px 28px", background: "#f5f5f5", borderRadius: 12, color: "#333", fontSize: 16, textDecoration: "none", fontWeight: 600 }}>See Demo</a>
+          </div>
+          <div style={{ display: "flex", gap: 24 }}>
+            {["✓ 30 days free", "✓ No credit card required", "✓ 10-min setup"].map(t => (
+              <div key={t} style={{ color: "#888", fontSize: 13 }}>{t}</div>
+            ))}
+          </div>
         </div>
 
-        {/* App Cards */}
-        <div className="grid grid-cols-1 gap-6">
-          {apps.map((app) => (
-            <a
-              key={app.href}
-              href={app.href}
-              className="group block bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-gray-300 transition-all duration-200"
-            >
-              <div className={`h-2 bg-gradient-to-r ${app.gradient}`} />
-              <div className="p-8 flex items-start gap-6">
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${app.gradient} flex items-center justify-center text-2xl flex-shrink-0`}>
-                  {app.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-xl font-bold text-gray-900">{app.title}</h2>
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${app.badgeColor}`}>
-                      {app.badge}
-                    </span>
-                  </div>
-                  <p className="text-gray-500 text-sm leading-relaxed">{app.description}</p>
-                </div>
-                <div className="text-gray-300 group-hover:text-gray-500 transition-colors text-xl flex-shrink-0">
-                  →
+        {/* Live demo chat */}
+        <div id="demo" style={{ background: "#fff", borderRadius: 20, boxShadow: "0 20px 60px rgba(107,140,255,0.15)", border: "1px solid #e8e8ff", overflow: "hidden" }}>
+          <div style={{ background: "linear-gradient(135deg, #6b8cff, #c084fc)", padding: "14px 20px", display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>⚡</div>
+            <div>
+              <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>Brows By Mia — AI Receptionist</div>
+              <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 11 }}>● Always online</div>
+            </div>
+          </div>
+          <div style={{ height: 280, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+            {messages.map((msg, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", animation: "fadeUp 0.3s ease" }}>
+                <div style={{ maxWidth: "82%", padding: "9px 13px", borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "4px 16px 16px 16px", background: msg.role === "user" ? "linear-gradient(135deg, #6b8cff, #c084fc)" : "#f5f5f5", color: msg.role === "user" ? "#fff" : "#1a1a1a", fontSize: 13, lineHeight: 1.5 }}>
+                  {msg.content}
                 </div>
               </div>
-            </a>
+            ))}
+            {loading && (
+              <div style={{ display: "flex", gap: 4, padding: "10px 14px", background: "#f5f5f5", borderRadius: "4px 16px 16px 16px", width: "fit-content" }}>
+                {[0,1,2].map(i => <span key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: "#bbb", display: "inline-block", animation: `bounce 1s ${i*0.2}s infinite` }} />)}
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+          <div style={{ padding: "8px 12px 12px", borderTop: "1px solid #f0f0f0", display: "flex", gap: 8 }}>
+            <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send(input)} placeholder="Try asking a question..." style={{ flex: 1, padding: "9px 14px", border: "1px solid #e5e5e5", borderRadius: 20, fontSize: 13, outline: "none" }} />
+            <button onClick={() => send(input)} disabled={loading || !input.trim()} style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg, #6b8cff, #c084fc)", border: "none", color: "#fff", cursor: "pointer", opacity: !input.trim() ? 0.5 : 1 }}>→</button>
+          </div>
+        </div>
+      </section>
+
+      {/* Social proof bar */}
+      <div style={{ background: "#f8f8ff", borderTop: "1px solid #e8e8ff", borderBottom: "1px solid #e8e8ff", padding: "20px 40px", textAlign: "center" }}>
+        <div style={{ color: "#888", fontSize: 13 }}>Perfect for: <strong style={{ color: "#333" }}>Lash Techs · Microblading · PMU Artists · Nail Techs · Estheticians · Hair Salons · HVAC · Dentists · Real Estate · Photographers</strong></div>
+      </div>
+
+      {/* How it works */}
+      <section id="how" style={{ padding: "80px 40px", maxWidth: 900, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 56 }}>
+          <h2 style={{ fontSize: 38, fontWeight: 800, marginBottom: 12 }}>Up and running in <span style={{ background: "linear-gradient(135deg, #6b8cff, #c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>10 minutes</span></h2>
+          <p style={{ color: "#888", fontSize: 16 }}>No tech skills required.</p>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 32 }}>
+          {[
+            { step: "01", title: "Sign up & configure", desc: "Add your services, pricing, and policies. Takes 10 minutes.", icon: "⚡" },
+            { step: "02", title: "Paste one line of code", desc: "Copy your embed code and paste it into your website. Done.", icon: "💻" },
+            { step: "03", title: "Never miss a client", desc: "Your AI handles questions and captures leads 24/7 automatically.", icon: "🎯" },
+          ].map(s => (
+            <div key={s.step} style={{ textAlign: "center", padding: 32, background: "#fafafa", borderRadius: 20, border: "1px solid #f0f0f0" }}>
+              <div style={{ fontSize: 36, marginBottom: 16 }}>{s.icon}</div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#6b8cff", letterSpacing: 2, marginBottom: 10 }}>STEP {s.step}</div>
+              <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 10 }}>{s.title}</div>
+              <div style={{ color: "#888", fontSize: 14, lineHeight: 1.6 }}>{s.desc}</div>
+            </div>
           ))}
         </div>
+      </section>
 
-        {/* Coming Soon Banner */}
-        <div className="mt-10 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 rounded-2xl p-6 text-center">
-          <div className="text-sm font-semibold text-purple-700 mb-1">🚀 Coming Next</div>
-          <p className="text-gray-600 text-sm">
-            Full SaaS platform — Supabase auth, Stripe $79/mo subscriptions, multi-tenant accounts for beauty techs, and a demo page.
-          </p>
+      {/* Pricing */}
+      <section id="pricing" style={{ padding: "80px 40px", background: "#f8f8ff" }}>
+        <div style={{ maxWidth: 500, margin: "0 auto", textAlign: "center" }}>
+          <h2 style={{ fontSize: 38, fontWeight: 800, marginBottom: 12 }}>Simple Pricing</h2>
+          <p style={{ color: "#888", marginBottom: 40 }}>One plan. Everything included.</p>
+          <div style={{ background: "#fff", borderRadius: 24, padding: 40, boxShadow: "0 20px 60px rgba(107,140,255,0.12)", border: "2px solid #6b8cff" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#6b8cff", letterSpacing: 1, marginBottom: 8 }}>APEX AI RECEPTIONIST</div>
+            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 4, marginBottom: 8 }}>
+              <div style={{ fontSize: 56, fontWeight: 900 }}>$79</div>
+              <div style={{ color: "#888", paddingBottom: 12 }}>/month</div>
+            </div>
+            <div style={{ color: "#4ade80", fontWeight: 700, fontSize: 14, marginBottom: 32 }}>First 30 days FREE</div>
+            {["24/7 AI chat on your website", "Custom services & pricing", "Booking request capture", "Client intake questions", "Unlimited conversations", "Works for any service business", "Cancel anytime"].map(f => (
+              <div key={f} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, textAlign: "left" }}>
+                <span style={{ color: "#4ade80", fontWeight: 700 }}>✓</span>
+                <span style={{ color: "#555", fontSize: 14 }}>{f}</span>
+              </div>
+            ))}
+            <a href="/signup" style={{ display: "block", marginTop: 32, padding: "16px", background: "linear-gradient(135deg, #6b8cff, #c084fc)", borderRadius: 14, color: "#fff", fontSize: 16, textDecoration: "none", fontWeight: 700, textAlign: "center" }}>Start Free Trial — No Card Needed</a>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ padding: "40px", borderTop: "1px solid #f0f0f0", textAlign: "center" }}>
+        <div style={{ fontSize: 20, marginBottom: 8 }}>⚡ <strong>Apex AI Receptionist</strong></div>
+        <div style={{ color: "#aaa", fontSize: 13, marginBottom: 16 }}>Never miss a client again.</div>
+        <div style={{ display: "flex", gap: 24, justifyContent: "center" }}>
+          <a href="/login" style={{ color: "#888", fontSize: 13, textDecoration: "none" }}>Sign In</a>
+          <a href="/signup" style={{ color: "#888", fontSize: 13, textDecoration: "none" }}>Sign Up</a>
+          <a href="/tracker" style={{ color: "#888", fontSize: 13, textDecoration: "none" }}>Outreach Tracker</a>
+        </div>
+      </footer>
     </div>
   );
 }
