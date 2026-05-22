@@ -1,141 +1,89 @@
 "use client";
 
-import { useState } from "react";
-import { GeneratedProduct, PRODUCT_TYPES } from "@/lib/product-types";
-import ProductGeneratorForm from "@/components/ProductGeneratorForm";
-import ProductCard from "@/components/ProductCard";
-import CategoryGrid from "@/components/CategoryGrid";
-
 export default function Home() {
-  const [products, setProducts] = useState<GeneratedProduct[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleGenerate = async (prompt: string, category?: string) => {
-    setIsGenerating(true);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, category }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Generation failed");
-
-      const product: GeneratedProduct = { ...data.product, status: "ready" };
-      setProducts((prev) => [product, ...prev]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleUpdateProduct = (updated: GeneratedProduct) => {
-    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-  };
-
-  const handleRemoveProduct = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-  };
+  const apps = [
+    {
+      href: "/receptionist",
+      icon: "💅",
+      title: "Beauty Tech AI Receptionist",
+      description: "Live AI chat for lash techs, microblading & PMU studios. Answers FAQs, handles intake, and books appointments 24/7.",
+      gradient: "from-pink-400 to-purple-500",
+      badge: "Live Product",
+      badgeColor: "bg-pink-100 text-pink-700",
+    },
+    {
+      href: "/tracker",
+      icon: "📋",
+      title: "OutreachHQ — Sales Tracker",
+      description: "Full CRM to manage your outreach. Track leads, pipeline, DM scripts, and follow-ups all in one dark-mode dashboard.",
+      gradient: "from-blue-500 to-purple-600",
+      badge: "Your Sales Tool",
+      badgeColor: "bg-blue-100 text-blue-700",
+    },
+    {
+      href: "/canva",
+      icon: "🎨",
+      title: "Canva Product Generator",
+      description: "Generate ready-to-sell Canva template digital products for your Etsy store. Wall art, planners, social templates & more.",
+      gradient: "from-purple-500 to-pink-500",
+      badge: "Etsy Products",
+      badgeColor: "bg-purple-100 text-purple-700",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
-              C
-            </div>
-            <div>
-              <h1 className="font-bold text-gray-900 text-lg leading-tight">
-                Canva Product Generator
-              </h1>
-              <p className="text-xs text-gray-500">Etsy Digital Products, ready to sell</p>
-            </div>
+      <div className="max-w-4xl mx-auto px-6 py-16">
+        {/* Header */}
+        <div className="text-center mb-14">
+          <div className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm text-gray-500 mb-6">
+            <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
+            All systems live
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span className="hidden sm:block">Powered by AI + Canva</span>
-            <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-200 rounded-full px-3 py-1 text-xs font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
-              Ready
-            </span>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 py-10">
-        {/* Hero */}
-        <div className="text-center mb-10">
-          <h2 className="text-4xl font-bold text-gray-900 mb-3">
-            Generate{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500">
-              Best-Selling
-            </span>{" "}
-            Digital Products
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Describe your product and get a fully packaged Etsy digital download — complete with
-            a Canva template link, Etsy listing copy, and tags.
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Your Business Suite</h1>
+          <p className="text-lg text-gray-500 max-w-xl mx-auto">
+            Three tools built for your beauty tech SaaS business — the product, the sales tracker, and the content generator.
           </p>
         </div>
 
-        {/* Generator Form */}
-        <ProductGeneratorForm
-          onGenerate={handleGenerate}
-          isGenerating={isGenerating}
-        />
-
-        {/* Error */}
-        {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-            <strong>Error:</strong> {error}
-          </div>
-        )}
-
-        {/* Generated Products */}
-        {products.length > 0 && (
-          <section className="mt-12">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-xl font-bold text-gray-900">
-                Generated Products ({products.length})
-              </h3>
-              <button
-                onClick={() => setProducts([])}
-                className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                Clear all
-              </button>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onUpdate={handleUpdateProduct}
-                  onRemove={handleRemoveProduct}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Category Grid (empty state) */}
-        {products.length === 0 && !isGenerating && (
-          <CategoryGrid onSelect={(example) => handleGenerate(example)} />
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white mt-20 py-8">
-        <div className="max-w-6xl mx-auto px-6 text-center text-sm text-gray-400">
-          Canva Product Generator &mdash; Sell digital products on Etsy with ease
+        {/* App Cards */}
+        <div className="grid grid-cols-1 gap-6">
+          {apps.map((app) => (
+            <a
+              key={app.href}
+              href={app.href}
+              className="group block bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-gray-300 transition-all duration-200"
+            >
+              <div className={`h-2 bg-gradient-to-r ${app.gradient}`} />
+              <div className="p-8 flex items-start gap-6">
+                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${app.gradient} flex items-center justify-center text-2xl flex-shrink-0`}>
+                  {app.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h2 className="text-xl font-bold text-gray-900">{app.title}</h2>
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${app.badgeColor}`}>
+                      {app.badge}
+                    </span>
+                  </div>
+                  <p className="text-gray-500 text-sm leading-relaxed">{app.description}</p>
+                </div>
+                <div className="text-gray-300 group-hover:text-gray-500 transition-colors text-xl flex-shrink-0">
+                  →
+                </div>
+              </div>
+            </a>
+          ))}
         </div>
-      </footer>
+
+        {/* Coming Soon Banner */}
+        <div className="mt-10 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 rounded-2xl p-6 text-center">
+          <div className="text-sm font-semibold text-purple-700 mb-1">🚀 Coming Next</div>
+          <p className="text-gray-600 text-sm">
+            Full SaaS platform — Supabase auth, Stripe $79/mo subscriptions, multi-tenant accounts for beauty techs, and a demo page.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
