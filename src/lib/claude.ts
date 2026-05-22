@@ -1,9 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { ProductCategory, GeneratedProduct, PRODUCT_TYPES } from "./product-types";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+function getAnthropic() {
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+}
 
 export async function analyzeAndGenerateProduct(
   prompt: string,
@@ -36,7 +36,7 @@ Respond with this exact JSON structure:
   "styleNotes": "2-3 sentences on the visual style, typography, and layout approach"
 }`;
 
-  const response = await anthropic.messages.create({
+  const response = await getAnthropic().messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 1500,
     messages: [

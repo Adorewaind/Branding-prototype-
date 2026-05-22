@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, PRICE_ID } from "@/lib/stripe";
+import { getStripe, PRICE_ID } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
   const { email } = await req.json();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: "subscription",
     payment_method_types: ["card"],
     line_items: [{ price: PRICE_ID, quantity: 1 }],
