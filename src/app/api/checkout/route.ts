@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       subscription_data: { trial_period_days: 7 },
+      payment_method_collection: "if_required",
       success_url: `${appUrl}/dashboard?setup=1`,
       cancel_url: `${appUrl}/signup`,
     });
