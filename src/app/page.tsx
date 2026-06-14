@@ -53,6 +53,7 @@ export default function LandingPage() {
           <div style={{ fontWeight: 800, fontSize: 18 }}>Apex <span style={{ background: "linear-gradient(135deg, #6b8cff, #c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AI Receptionist</span></div>
         </div>
         <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
+          <a href="/digital-downloads" style={{ color: "#6b8cff", fontSize: 14, textDecoration: "none", fontWeight: 700 }}>⬇ Download Maker</a>
           <a href="#how" style={{ color: "#888", fontSize: 14, textDecoration: "none", fontWeight: 500 }}>How it works</a>
           <a href="#pricing" style={{ color: "#888", fontSize: 14, textDecoration: "none", fontWeight: 500 }}>Pricing</a>
           <a href="/login" style={{ color: "#888", fontSize: 14, textDecoration: "none", fontWeight: 500 }}>Sign in</a>
