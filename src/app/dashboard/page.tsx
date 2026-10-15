@@ -70,6 +70,7 @@ function DashboardContent() {
           </div>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <a href="/dashboard/crew" style={{ padding: "8px 16px", background: "#1e1e1e", border: "1px solid #2a2a2a", borderRadius: 8, color: "#3ddc84", fontSize: 13, textDecoration: "none" }}>👥 Crew Coverage</a>
           <a href="/dashboard/receptionist" style={{ padding: "8px 16px", background: "#1e1e1e", border: "1px solid #2a2a2a", borderRadius: 8, color: "#888", fontSize: 13, textDecoration: "none" }}>⚙️ Configure AI</a>
           <button onClick={handleLogout} style={{ padding: "8px 16px", background: "transparent", border: "1px solid #2a2a2a", borderRadius: 8, color: "#555", fontSize: 13, cursor: "pointer" }}>Sign Out</button>
         </div>
